@@ -1,35 +1,65 @@
-from fastapi import APIRouter, Depends, FastAPI, status, Response
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from ..controllers import orders as controller
-from ..schemas import orders as schema
-from ..dependencies.database import engine, get_db
+from typing import List
+from datetime import datetime
+
+from ..schemas.orders import OrderCreate, OrderUpdate, OrderOut
+from ..models.orders import Order
+from ..dependencies.database import get_db
 
 router = APIRouter(
-    tags=['Orders'],
-    prefix="/orders"
+    prefix="/orders",
+    tags=["Orders"]
 )
 
+# CREATE order
+@router.post("/", response_model=OrderOut)
+def create_order(order: OrderCreate, db: Session = Depends(get_db)):
+    new_order = Order(**order.dict())
+    db.add(new_order)
+    db.commit()
+    db.refresh(new_order)
+    return new_order
 
-@router.post("/", response_model=schema.Order)
-def create(request: schema.OrderCreate, db: Session = Depends(get_db)):
-    return controller.create(db=db, request=request)
+# READ all orders
+@router.get("/", response_model=List[OrderOut])
+def get_orders(db: Session = Depends(get_db)):
+    return db.query(Order).all()
 
+# READ single order by ID
+@router.get("/{order_id}", response_model=OrderOut)
+def get_order(order_id: int, db: Session = Depends(get_db)):
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return order
 
-@router.get("/", response_model=list[schema.Order])
-def read_all(db: Session = Depends(get_db)):
-    return controller.read_all(db)
+# READ order by tracking number
+@router.get("/track/{tracking_number}", response_model=OrderOut)
+def track_order(tracking_number: str, db: Session = Depends(get_db)):
+    order = db.query(Order).filter(Order.tracking_number == tracking_number).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return order
 
+# UPDATE order status
+@router.put("/{order_id}", response_model=OrderOut)
+def update_order(order_id: int, order_data: OrderUpdate, db: Session = Depends(get_db)):
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    for key, value in order_data.dict(exclude_unset=True).items():
+        setattr(order, key, value)
+    db.commit()
+    db.refresh(order)
+    return order
 
-@router.get("/{item_id}", response_model=schema.Order)
-def read_one(item_id: int, db: Session = Depends(get_db)):
-    return controller.read_one(db, item_id=item_id)
-
-
-@router.put("/{item_id}", response_model=schema.Order)
-def update(item_id: int, request: schema.OrderUpdate, db: Session = Depends(get_db)):
-    return controller.update(db=db, request=request, item_id=item_id)
-
-
-@router.delete("/{item_id}")
-def delete(item_id: int, db: Session = Depends(get_db)):
-    return controller.delete(db=db, item_id=item_id)
+# DELETE order
+@router.delete("/{order_id}")
+def delete_order(order_id: int, db: Session = Depends(get_db)):
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    db.delete(order)
+    db.commit()
+    return {"message": "Order deleted successfully"}

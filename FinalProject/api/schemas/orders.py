@@ -1,28 +1,28 @@
+from pydantic import BaseModel, Field
+from typing import List, Optional
 from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel
-from .order_details import OrderDetail
-
 
 
 class OrderBase(BaseModel):
-    customer_name: str
-    description: Optional[str] = None
+    order_type: str = Field(..., example="delivery")  # pickup / delivery
+    total_price: float = Field(..., example=24.99)
 
 
 class OrderCreate(OrderBase):
-    pass
+    customer_id: int
+    tracking_number: str = Field(..., example="ORD-123456")
 
 
 class OrderUpdate(BaseModel):
-    customer_name: Optional[str] = None
-    description: Optional[str] = None
+    status: Optional[str] = Field(None, example="preparing")
 
 
-class Order(OrderBase):
+class OrderOut(OrderBase):
     id: int
-    order_date: Optional[datetime] = None
-    order_details: list[OrderDetail] = None
+    tracking_number: str
+    status: str
+    created_at: datetime
+    customer_id: int
 
-    class ConfigDict:
+    class Config:
         from_attributes = True
