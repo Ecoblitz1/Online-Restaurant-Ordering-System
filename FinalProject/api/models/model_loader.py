@@ -4,7 +4,7 @@ from .customers import Customer
 from .menu_items import MenuItem
 from .orders import Order
 from .order_items import OrderItem
-from .payments import Payment
+from .payment import Payment
 from .reviews import Review
 from .promotions import Promotion
 

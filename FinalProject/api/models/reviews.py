@@ -9,6 +9,6 @@ class Review(Base):
     rating = Column(Integer, nullable=False)
     comment = Column(String(255))
 
-    customer_id = Column(Integer, ForeignKey("customers.id"))
+    customer_id = Column(Integer, ForeignKey("customers.customer_id"))
 
     customer = relationship("Customer", back_populates="reviews")

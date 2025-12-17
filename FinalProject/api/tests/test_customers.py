@@ -3,6 +3,6 @@ from api.main import app
 
 client = TestClient(app)
 
-def test_orders_endpoint_exists():
-    response = client.get("/orders")
+def test_get_customers_endpoint():
+    response = client.get("/customers")
     assert response.status_code in (200, 404)

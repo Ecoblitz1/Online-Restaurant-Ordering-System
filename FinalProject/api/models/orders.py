@@ -13,7 +13,7 @@ class Order(Base):
     total_price = Column(Float, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    customer_id = Column(Integer, ForeignKey("customers.id"))
+    customer_id = Column(Integer, ForeignKey("customers.customer_id"))
 
     customer = relationship("Customer", back_populates="orders")
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
